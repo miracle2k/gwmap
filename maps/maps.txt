@@ -1,0 +1,3 @@
+;map name|zoom level count|default zoom (0-max)|tile count x/y zoom 0|tile count x/y zoom 1|...
+cantha|6|4|2;2|5;4|11;8|23;17|47;35|95;71
+battle-isles|4|2|3;2|7;5|15;11|31;23
