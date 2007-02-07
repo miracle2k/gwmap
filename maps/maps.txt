@@ -1,3 +1,6 @@
 ;map name|zoom level count|default zoom (0-max)|tile count x/y zoom 0|tile count x/y zoom 1|...
+tyria|6|4|3;2|7;5|15;11|31;23|63;47|127;95
 cantha|6|4|2;2|5;4|11;8|23;17|47;35|95;71
+elona|6|4|3;2|6;4|12;9|24;18|48;36|96;72
 battle-isles|4|2|3;2|7;5|15;11|31;23
+pre-searing|4|2|3;3|7;6|15;12|31;24
