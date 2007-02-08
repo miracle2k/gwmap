@@ -43,7 +43,7 @@
         for($i=0;$i<intval($_marr[1]);$i++)
         {
             list($_x, $_y) = split(';', $_marr[$i+3]);
-            // make sure we have a valid data
+            // make sure we have valid data
             $_x = intval($_x); $_y = intval($_y);
             if (!$_x | !$_y) die("failed to read tile count for zoom level '$i' of map '{$_marr[0]}'.");        
             
