@@ -41,6 +41,15 @@
     $zoomLevel = intval(loadOption('z', -1));
     $whichMap = loadOption('map');
     
+    // build the cache filename based on the above parameters
+    function build_cache_filename()
+    {
+        global $whichMap, $zoomLevel, $positionX, $positionY, $outputWidth, $outputHeight;
+        return CACHE_DIR.'/'.$whichMap.'_'.intval($zoomLevel).'_'.
+          floatval($positionX).'_'.floatval($positionY).'_'.
+          intval($outputWidth).'_'.intval($outputHeight).'.png';
+    }
+    
     /*
      * Open the map index file, and get all the neccessary data
      */
@@ -76,7 +85,7 @@
     if ($zoomLevel == -1) $zoomLevel = $available_maps[$whichMap]['default-zoom'];
     // make sure the requested zoom level is valid
     if (!isset($available_maps[$whichMap]['tile-counts'][$zoomLevel]))
-      die("A zoom level of $zoomLevel is not valid for '$whichMap'.");
+      die("A zoom level of $zoomLevel is not valid for '$whichMap'.");    
       
     /*
      * adjust requested position:
@@ -87,6 +96,20 @@
     $positionX += 1; $positionY += 1;
     $positionX = $positionX / pow(2, $available_maps[$whichMap]['default-zoom']-$zoomLevel);
     $positionY = $positionY / pow(2, $available_maps[$whichMap]['default-zoom']-$zoomLevel);
+    
+    /*
+     * If caching is activated, see if a previously created image exists.
+     */
+    if (CACHE_DIR) 
+    {
+        $_cache_filename = build_cache_filename();
+        if (file_exists($_cache_filename)) 
+        {
+            header("Content-type: image/png");
+            @readfile($_cache_filename); 
+            exit;
+        }    
+    }    
     
     /*
      * Calculate some positions / indices we will need to put  the map together.
@@ -150,6 +173,13 @@
           
     // send to browser
     header("Content-type: image/png");   
-    imagepng($mapImg);    
+    imagepng($mapImg);
+    
+    // if caching is activated, save the file to disk, too
+    if (CACHE_DIR) {
+      imagepng($mapImg, build_cache_filename());    
+    }
+    
+    // finally, destroy    
     imagedestroy($mapImg);   
 ?>
