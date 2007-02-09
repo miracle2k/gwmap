@@ -1,0 +1,130 @@
+<!DOCTYPE HTML "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+
+<!--
+  We'll create the same map as in demo1.html (position of Gwen in pre-searing, 
+  but this time, we do it manually. It's not as easy as you would think.
+-->
+
+<html>
+   <head>
+      <title>GWMap Demo 2</title>
+      <!-- 
+        key for: mapdev.fiftypounds.com
+        <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAA-wik5vrP6r-H5hKaicXDfRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxRZbt9yc3D_ZQ-1GhTs3RZKxVr1rA" type="text/javascript"></script> 
+      -->
+      <!--
+        key for: localhost
+      -->
+        <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAA-wik5vrP6r-H5hKaicXDfRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxRZbt9yc3D_ZQ-1GhTs3RZKxVr1rA" type="text/javascript"></script>
+      <!--
+      -->      
+      
+      <!-- load GWMap class -->  
+      <script language="Javascript" type="text/javascript" src="../js/GWMap.js"></script>
+   </head>
+   
+   <script>
+     // This will be a reference to our GWMap() object. Declare this outside the
+     // load() function, so that we can access it later, if needed.
+     var mapObj = false;
+     
+     // called by body.onLoad
+     function load()
+     {
+         // Create the GWMap() object. Parameters are:
+         //   1) The DOM node to attach to
+         //   2) The map id (tyria, elona, cantha, ...)
+         //   3) The zoom level
+         //   4, 5) The position to initial center on
+         // As we don't provide 3-5, the default zoom level will automatically 
+         // be used, and the map center will be used.
+         map = new GWMap('gwmap', 'pre-searing', 0);
+         
+         // Now it gets a little bit more complicated. Please not that although 
+         // the above constructor call has returned, this is NO GUARANTEE that
+         // the Google Map itself has already been created. In fact, most likely
+         // it hasn't. The reason for this is that before we can do that, we 
+         // have to load a database of  available maps. This is done dynamically 
+         // via Ajax. So, before we continue, we have to wait for that to complete.
+         
+         // Basically, what has to be done is to keep using window.setTimeout() 
+         // until either MAP_INDEX_LOADED or MAP_INDEX_FAILED is True. In the latter
+         // case we can't do anything.
+         // To make things easier, we can use GWMap.waitForDatabase(). But wait, 
+         // there's one more thing to look out for! The callback closure will be
+         // executed through setTimeout(), and thus loses the local context.  To
+         // make sure it can access the GMap() object we just created, that object
+         // references HAS to be declared as a global variable via "var"!
+         
+         map.waitForDatabase(
+            // this will be executed once the map is successfully constructed
+            function()
+            {       
+                // Add a click event                 
+                GEvent.addListener(map.mapObject, "click", function(marker, point) 
+                {
+                     // add/remove markers
+                     if (marker) map.mapObject.removeOverlay(marker);
+                     else map.indicatePosition(point.x, point.y);   
+                     
+                     // do more stuff here that requires access to map.mapObject                    
+                }); 
+            },  
+            // array of parameters we want to pass to the above function
+            [],
+            // MUST be false, or it won't work (indicates external call)
+            false
+         );
+            
+         // Instead of using "var" as described above, we can also do the following
+         // to ensure we can access the GWMap() object (for more info, see:
+         // http://www.jibbering.com/faq/faq_notes/closures.html)
+         
+         // Returns a reference to an anonymous inner function
+         /*function ContinueCall(map)
+         {
+             // This inner function is to be executed with setTimeout
+             // - and when it is executed it can read, and act upon, the
+             // parameters passed to the outer function.         
+             return function()
+             {              
+                 // Add a click event                 
+                 GEvent.addListener(map.mapObject, "click", function(marker, point) 
+                 {
+                     // add/remove markers
+                     if (marker) map.mapObject.removeOverlay(marker);
+                     else map.indicatePosition(point.x, point.y);                       
+                 }); 
+             }           
+         }                  
+            
+         // Store a function call reference in a local variable.
+         var ContinueCallRef = ContinueCall(map);  
+            
+         // Call waitForDatabase with that function call reference we just created.
+         // It will have access to the map object we passed as a parameter.
+         map.waitForDatabase(
+            ContinueCallRef,
+            // array of parameters we want to pass to the above function
+            [],
+            // MUST be false, or it won't work (indicates external call)
+            false
+         ); */         
+     }   
+   </script>
+   
+   <!-- 
+     body Events:
+       onLoad: Only the create the map after the page has completed loading, 
+         or there can be issues in some browsers       
+       onUnload: Try to prevent memory leaks (GoogleMaps function)
+    -->
+   <body 
+     onLoad="load()"      
+     onUnload="GUnload()">
+      <!-- 
+        This is the div container that will include the map.
+       -->      
+      <div id="gwmap" style="width: 400px; height: 400px"></div>
+   </body>
+</html>

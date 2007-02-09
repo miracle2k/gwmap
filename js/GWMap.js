@@ -1,7 +1,28 @@
 /*
+ * The contents of this file are subject to the GNU General Public License
+ * version 2 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ * http://www.gnu.org/copyleft/gpl.html
+ * 
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ * 
+ * The Initial Developer of the Original Code is Michael Elsdörfer.
+ * All Rights Reserved.
+ *
+ * $Id$
+ * 
+ * TODO:
+ *   # more features, obviously
+ *   # debug modus, that will show messages (or callback) on errors, instead of
+ *       supressing them.
+ */
+
+/*
  * Import code from additional javascript files.
  */
- 
+
 document.write('<script src="../js/FlatProjection.js" type="text/javascript"></script>');
 
 /*
@@ -54,32 +75,44 @@ function GWMap(attachTo, whichMap, zoom, posX, posY)
      * Class methods
      ********************************************************************/
      
-    this.waitForDatabase = function(callback, parameters)
+    // calls itself until the map index is loaded, then calls the specified function.
+    // if internal is not set to false, it will always try to call a class method.    
+    this.waitForDatabase = function(callback, parameters, internal)
     {             
+        // default parameters
+        if (internal==undefined) internal = true;
         // check status of map database. if we are still loading, wait until that is completed (and
         // check in 50 msec intervals). If we already know map loading failed, don't wait any longer.
         // See http://west-wind.com/WebLog/posts/5033.aspx on how to use SetTimeout() within class methods.
         if (MAP_INDEX_FAILED) { alert('Database not available - cannot create map.'); return false; }
         if (!MAP_INDEX_LOADED) {                    
-            self = this;  
-            window.setTimeout(function() { self['waitForDatabase'].apply(self, [callback, parameters]); }, 50);
+            self = this;              
+            window.setTimeout(function() { self['waitForDatabase'].apply(self, [callback, parameters, internal]); }, 50);
             return false;
         }
         // map data is loaded, return
         else {
-          self[callback].apply(self, parameters);
+          if (internal)
+            self[callback].apply(self, parameters);
+          else
+            callback();
+          return true;
         }
     }
-
+             
+    // create and initialize the google map object. called by the constructor once
+    // the map index is loaded.
     this.createMap = function(attachTo, whichMap, zoom, posX, posY)
     {        
-        if (!MAP_INDEX_LOADED)       
+        if (!MAP_INDEX_LOADED) {       
           this.waitForDatabase('createMap', [attachTo, whichMap, zoom, posX, posY]);
+          return false;
+        }
         
         // make sure the requested map is valid     
         if (available_maps[whichMap] === undefined) return false;
         mapdata = available_maps[whichMap];
-        
+                      
         // create GTileLayer array that will represent the map images;
         var tileLayers = [new GTileLayer(
             // use an empty copyright collection - instead we will later
@@ -111,7 +144,7 @@ function GWMap(attachTo, whichMap, zoom, posX, posY)
             {errorMessage:_mMapError}
         );
 
-        // finally, create the google map object
+        // finally, create the google map object        
         this.mapObject = new GMap2(document.getElementById(attachTo));
         // add some controls
         this.mapObject.addControl(new GScaleControl());
@@ -126,27 +159,50 @@ function GWMap(attachTo, whichMap, zoom, posX, posY)
         // if not zoom is given, use default
         if (!posX || !posY) { posX = (this.MapWidth/this.MapPxPerLon)/2; posY = (this.MapHeight/this.MapPxPerLon)/2; }
         if (zoom == undefined) zoom = mapdata['default-zoom'];
-        this.mapObject.setCenter(new GLatLng(posY,posX), zoom, gwMapType);  
+        this.mapObject.setCenter(new GLatLng(posY,posX), zoom, gwMapType);        
     }   
+    
+    // initialize custom icons
+    this.__createIcons = function()
+    {            
+        // store all icons in array 
+        this.icons = new Array();
+        
+        // create our "tiny" marker icon        
+        this.icons['marker'] = new GIcon();
+        this.icons['marker'].image = "../img/marker.png";
+        this.icons['marker'].shadow = "../img/marker.png";
+        this.icons['marker'].iconSize = new GSize(20, 20);
+        this.icons['marker'].shadowSize = new GSize(20, 20);
+        this.icons['marker'].iconAnchor = new GPoint(10, 10);
+        this.icons['marker'].infoWindowAnchor = new GPoint(5, 1);        
+    }
+    
+    // wrapper around mapObject.addOverlay()
+    this.addOverlay = function(posX, posY, icon)
+    {
+        if (!MAP_INDEX_LOADED) {      
+          this.waitForDatabase('addOverlay', [posX, posY, icon]);
+          return false;
+        }  
+        
+        // add marker
+        marker = new GMarker(new GPoint(posX,posY), this.icons[icon]);
+        this.mapObject.addOverlay(marker); 
+        return marker;   
+    }
 
+    // addOverlay() shortcut with default icon
     this.indicatePosition = function(posX, posY) 
     {        
-        if (!MAP_INDEX_LOADED) {      
-          this.waitForDatabase('indicatePosition', [posX, posY]);
-          return false;
-        }   
-        // create our "tiny" marker icon
-        var icon = new GIcon();
-        icon.image = "../img/marker.png";
-        icon.shadow = "../img/marker.png";
-        icon.iconSize = new GSize(20, 20);
-        icon.shadowSize = new GSize(20, 20);
-        icon.iconAnchor = new GPoint(10, 10);
-        icon.infoWindowAnchor = new GPoint(5, 1);
-
-        // add marker
-        marker = new GMarker(new GPoint(posX,posY), icon);
-        this.mapObject.addOverlay(marker);      
+        return this.addOverlay(posX, posY, "marker");
+    }
+    
+    // wrapper around mapObject.getZoom()
+    this.getZoomLevel = function()
+    {
+        if (!MAP_INDEX_LOADED) return false;        
+        return this.mapObject.getZoom();       
     }
     
     /*********************************************************************
@@ -156,6 +212,9 @@ function GWMap(attachTo, whichMap, zoom, posX, posY)
     // create the map object. we need a separate function for this, as we have to
     // wait for the map database to be loaded, and that requires recusion.
     this.createMap(attachTo, whichMap, zoom, posX, posY);
+    
+    // create predefined icons
+    this.__createIcons();
 }
 
 /*
@@ -175,11 +234,11 @@ function parse_map_index(data, responseCode)
         for(key in lines) 
         {
             // if this line is a comment, ignore 
-            map = lines[key].replace(/^\s*|\s*$/g,"");
-            if (map[0]==';') continue;
+            _map = lines[key].replace(/^\s*|\s*$/g,"");
+            if (_map[0]==';') continue;
             // split into fields, format is:
             // map name|zoom level count|default zoom (0-max)|tile count x/y zoom 0|tile count x/y zoom 1|...  
-            _marr = map.split('|');
+            _marr = _map.split('|');
             available_maps[_marr[0]] = new Array();
             available_maps[_marr[0]]['max-zoom'] = parseInt(_marr[1])-1;
             available_maps[_marr[0]]['default-zoom'] = parseInt(_marr[2]);
@@ -224,7 +283,7 @@ function log(message) {
  * Quick access to commonly used map functionality.
  */
 
-function gwmap_indicate_position(whichMap, posX, posY, width, height)
+function gwmap_indicate_position(whichMap, posX, posY, width, height, zoom)
 {
     // use default values for width and height of not passed
     if (!width) width='300px';
@@ -234,6 +293,6 @@ function gwmap_indicate_position(whichMap, posX, posY, width, height)
     // output the div we use to display the map
     document.write('<div id="'+divId+'" style="width: '+width+'; height: '+height+';"></div>');
     // create map object and attach
-    mapObj = new GWMap(divId, whichMap, 3, posX, posY);
+    mapObj = new GWMap(divId, whichMap, zoom, posX, posY);
     mapObj.indicatePosition(posX, posY);
 }

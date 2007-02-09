@@ -1,0 +1,33 @@
+<!DOCTYPE HTML "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+
+<!--
+  This will output a 400x400 pixel map of pre-searing, with a marker indicating 
+  the spot where Gwen can be found.
+  
+  Instead of manually created the map object, the gwmap_indicate_position() shortcut is used.
+-->
+
+<html>
+   <head>
+      <title>GWMap Demo 1</title>
+      <!-- 
+        key for: mapdev.fiftypounds.com
+        <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAA-wik5vrP6r-H5hKaicXDfRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxRZbt9yc3D_ZQ-1GhTs3RZKxVr1rA" type="text/javascript"></script> 
+      -->
+      <!--
+        key for: localhost
+      -->
+        <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAA-wik5vrP6r-H5hKaicXDfRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxRZbt9yc3D_ZQ-1GhTs3RZKxVr1rA" type="text/javascript"></script>
+      <!--
+      -->      
+      
+      <!-- load GWMap class -->  
+      <script language="Javascript" type="text/javascript" src="../js/GWMap.js"></script>
+   </head>
+   <body>
+      <script language="Javascript" type="text/javascript">                     
+        mapObj = gwmap_indicate_position('pre-searing', 7.94140625, 5.671875, '400px', '400px', 1);        
+        // we could now do something with mapObj
+      </script>
+   </body>
+</html>

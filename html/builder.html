@@ -1,0 +1,154 @@
+<!DOCTYPE HTML "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+
+<html>
+   <head>
+      <title>GWMap Builder</title>
+      <!--
+        <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAA-wik5vrP6r-H5hKaicXDfRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxRZbt9yc3D_ZQ-1GhTs3RZKxVr1rA" type="text/javascript"></script> -->
+        <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAA-wik5vrP6r-H5hKaicXDfRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxRZbt9yc3D_ZQ-1GhTs3RZKxVr1rA" type="text/javascript"></script>        
+        <script language="Javascript" type="text/javascript" src="../js/GWMap.js"></script>
+   </head>  
+      
+   <script>
+     // current position of the indicator (only one can exist)
+     var currentMarker = false;
+     // what map is currently shown (elona, tyria...)    
+     var currentMapId = false;
+     // GWMap object
+     var map = false;
+     
+     // create (or recreate) the requested map
+     function create_map(mapid)
+     {
+         // instantiate map object
+         map = new GWMap('gwmap', mapid, 0);
+         currentMapId = mapid;
+         
+         // execute some initialization code once the map loaded
+         map.waitForDatabase(
+            function()
+            {       
+                //map.mapObject.checkResize();               
+                GEvent.addListener(map.mapObject, "click", function(marker, point) 
+                {
+                     // if clicked on marker, remove it
+                     if (currentMarker) map.mapObject.removeOverlay(currentMarker);
+                     // set a new marker if clicked on an empty space
+                     if (point !== undefined)
+                     {
+                         currentMarker = map.indicatePosition(point.x, point.y);
+                         // show coordinates
+                         document.getElementById('markerPos').innerHTML = 
+                           currentMarker.getPoint().x+" / "+currentMarker.getPoint().y;
+                     }
+                     // no new marker set, means we don't have one currently
+                     else 
+                     {
+                         currentMarker = false;
+                         document.getElementById('markerPos').innerHTML = 'none';                           
+                     }
+                }); 
+            }  
+           ,[], false);           
+     }
+     
+     // called by body.onLoad
+     function load()
+     {
+        // show tyria map by default
+        create_map('tyria');   
+     }
+     
+     // build a link to the current view as a static image (php version of this) and open in popup
+     function build_static_link()
+     {         
+         if (!currentMarker) alert('You need to select a position on the map first!');
+         else
+         {         
+             _w = document.getElementById("gwmap").style.width;
+             _h = document.getElementById("gwmap").style.height;
+             link = '../php/index.php?x='+(currentMarker.getPoint().x)+
+               '&y='+(currentMarker.getPoint().y)+'&map='+currentMapId+'&z='+map.getZoomLevel()+
+               '&w='+_w+'&h='+_h;
+             map.mapObject.setCenter(currentMarker.getPoint());
+             window.open (link, "staticmap","width="+(_w+20)+",height="+(_h+20)+",resizable=1,location=1");
+         }
+     }     
+     
+     // handles clicks to the map type switch button
+     function switch_map_click()
+     {
+         selobj = document.getElementById('maptypes');
+         mapid = selobj.options[selobj.selectedIndex].id;
+         create_map(mapid);
+     }
+     
+     // call this to start a resize operation
+     function start_resize()
+     {
+         document.onmousemove = mouseMoveHandler;
+         document.onmousedown = mouseDownHandler; 
+         resizerObj = document.getElementById("resizer"); 
+         resizerObj.style.visibility = 'visible';
+     }
+     
+     // call this to end a resize operation
+     function end_resize()
+     {
+         document.onmousemove = undefined;
+         document.onmousedown = undefined;         
+         resizerObj = document.getElementById("resizer");
+         mapObj = document.getElementById("gwmap");
+         mapObj.style.width = resizerObj.style.width;
+         mapObj.style.height = resizerObj.style.height;
+         map.mapObject.checkResize();
+         resizerObj.style.visibility = 'hidden';
+     }
+     
+     // handles document.onMouseMove event during resizing
+     function mouseMoveHandler(e)
+     {
+         if (e == null) var e = window.event;
+         obj = document.getElementById("resizer");
+         obj.style.width = e.clientX;
+         obj.style.height = e.clientY;
+     } 
+     
+     // handles document.onMouseDown event during resizing
+     function mouseDownHandler(e)
+     {
+         end_resize();
+     } 
+   </script>
+   
+   <body onload="load()" onunload="GUnload()" onresize="" style="margin: 0;">
+        
+      <div id="display">
+          <div id="gwmap" style="width: 400px; height: 400px"></div>      
+          <div id="resizer" style="position: absolute; left: 0px; top: 0px; width: 500px; height: 500px; border-right: 1px solid black; border-bottom: 1px solid black; visibility: hidden"></div>                    
+      </div>
+      
+      <div style="position: absolute; bottom: 0px; width: 100%; background-color: black; color: white; border-top: 1px solid white;">
+        <div style="float: left; padding: 10px;">
+            <a href="#" onClick="build_static_link(); return false;" style="color: white;">Make static image</a>
+            | Click to move marker
+            | Current position: <span id="markerPos">none</span>
+        </div>
+        <div style="float: right; padding: 10px;">
+          Switch map:
+          <select id="maptypes">
+            <option id="tyria">Tyria</option>
+            <option id="cantha">Cantha</option>
+            <option id="elona">Elona</option>
+            <option id="battle-isles">Battle-Isles</option>
+            <option id="pre-searing">Pre-Searing</option>
+          </select>
+          <input type="submit" value="Go!" onclick="switch_map_click()" />
+          |
+          <input type="submit" value="Resize" onclick="start_resize()" />
+        </div>
+        <div style="clear: both;"></div>
+      </div>      
+             
+   </body>
+</html>
