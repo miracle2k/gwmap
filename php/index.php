@@ -12,16 +12,19 @@
  * The Initial Developer of the Original Code is Michael Elsdörfer.
  * All Rights Reserved.
  * 
+ * $Id$
+ * 
  */
 
     /*
      * Some default settings.
      */
-    DEFINE('DEFAULT_WIDTH',       400);  // used if no value is passed
-    DEFINE('DEFAULT_HEIGHT',      400);  // used if no value is passed
+    DEFINE('DEFAULT_WIDTH',       400);       // used if no value is passed
+    DEFINE('DEFAULT_HEIGHT',      400);       // used if no value is passed
     DEFINE('TILE_SIZE',           256);
     DEFINE('MAPDATA_DIR',         '../maps');
     DEFINE('IMG_DIR',             '../img'); 
+    DEFINE('CACHE_DIR',           false);     // set to activate caching. (e.g. /tmp/gwmap)
      
     /*
      * Handle parameters.
