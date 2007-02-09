@@ -89,10 +89,13 @@
       
     /*
      * adjust requested position:
+     *    # * TILE_SIZE, to get pixel value
      *    # +1/+1, because it is zero-, but our calculations 1-based
      *    # for each zoom level modify position by factor 2. On the default 
-     *      zoom level, coordinates = pixels
+     *      zoom level, coordinates = pixels     
      */
+    $positionX *= TILE_SIZE;
+    $positionY *= TILE_SIZE;
     $positionX += 1; $positionY += 1;
     $positionX = $positionX / pow(2, $available_maps[$whichMap]['default-zoom']-$zoomLevel);
     $positionY = $positionY / pow(2, $available_maps[$whichMap]['default-zoom']-$zoomLevel);
