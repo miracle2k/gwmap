@@ -141,7 +141,7 @@ function GWMap(attachTo, whichMap, zoom, posX, posY)
             // name of the map type (test: will this really be appended to copyright notice?)
             "Custom",
             // use default error message for unavailable tiles
-            {errorMessage:_mMapError}
+            {errorMessage:"Not available"}
         );
 
         // finally, create the google map object        
@@ -224,8 +224,8 @@ function parse_map_index(data, responseCode)
 {
     function __failed(msg) { MAP_INDEX_FAILED = true; /*alert(msg);*/ return false; }
 
-    // check for valid response
-    if (!data || responseCode != 200) {
+    // check for valid response (code 0 is local files in gecko)
+    if (!data || (responseCode != 200 && responseCode != 0)) {
         MAP_INDEX_FAILED = true;
     }
     else {
